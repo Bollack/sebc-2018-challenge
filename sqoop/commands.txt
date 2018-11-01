@@ -1,0 +1,29 @@
+Paso 1
+
+Ingestar datos de las transacciones de ventas:
+IP: 34.205.65.241
+Puerto: 3306
+Usuario: bootcamp
+Contraseña: bootcamp
+Base de datos: ecommerce
+Tabla: product_transaction
+Motor: MySQL
+
+
+sqoop list-tables --driver com.mysql.jdbc.Driver --connect jdbc:mysql://34.205.65.241:3306/ecommerce --username bootcamp --password bootcamp 
+
+export HADOOP_USER_NAME=hdfs
+# sqoop import --driver com.mysql.jdbc.Driver --connect jdbc:mysql://34.205.65.241:3306/ecommerce_cloudera --username bootcamp --password bootcamp --table product_transaction --fields-terminated-by ',' --hive-import
+sqoop eval --driver com.mysql.jdbc.Driver --connect jdbc:mysql://34.205.65.241:3306/ecommerce_cloudera --username bootcamp --password bootcamp --query "describe ecommerce_cloudera.product_transaction"
+
+wget http://34.205.65.241/access.log
+hdfs dfs -mkdir /tmp/test_logs
+hdfs dfs -put access.log  /tmp/test_logs/
+
+
+ sqoop export --driver com.mysql.jdbc.Driver --connect jdbc:mysql://34.205.65.241:3306/ecommerce_cloudera --username bootcamp --password bootcamp  --table conversion_2  -m 10 --hcatalog-table conversions
+
+ mysql -u bootcamp -pbootcamp -h 34.205.65.241
+ use ecommerce_cloudera
+ select * from conversion_2;
+#Si no se especifica DB, usa default.

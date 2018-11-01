@@ -1,0 +1,45 @@
+CREATE EXTERNAL TABLE web_logs ( 
+     ip STRING,
+     time_local STRING,
+    method STRING,
+     uri STRING,
+      protocol STRING,
+     status STRING,
+     bytes_sent STRING,
+      referer STRING,
+       useragent STRING
+    )
+ROW FORMAT SERDE "org.apache.hadoop.hive.serde2.RegexSerDe"
+WITH SERDEPROPERTIES (
+"input.regex" = '^(\\S+) \\S+ \\S+ \\[([^\\[]+)\\] "(\\w+) (\\S+) (\\S+)" (\\d+) (\\d+) "([^"]+)" "([^"]+)".*'
+)
+STORED AS TEXTFILE
+LOCATION "/tmp/test_logs/";
+
+
+
+ALTER TABLE web_logs ADD COLUMNS (product_id string);
+
+
+CREATE TABLE product_sales
+AS 
+SELECT product_id, count(*), sum(product_cantity) FROM product_transaction GROUP BY product_id;
+
+CREATE TABLE views
+AS
+SELECT uri, substring(uri, 16) as product_id
+FROM web_logs
+WHERE uri LIKE '%/item/id?skuID=%';
+
+CREATE TABLE views_total
+AS
+SELECT product_id, count(product_id) 
+FROM `views`
+GROUP BY product_id;
+
+CREATE TABLE conversions
+AS
+SELECT ps.product_id as sku,  ps.`_c2`/vt.`_c1` as conversion
+FROM product_sales ps JOIN views_total vt 
+ON (ps.product_id = vt.product_id);
+
